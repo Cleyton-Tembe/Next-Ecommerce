@@ -66,7 +66,7 @@ NEXT_SECRET_TOKEN=um-segredo-longo-e-aleatorio
 
 # Stripe
 STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_SECRET_KEY=pk_test_...   # atenção: aqui vai a chave PUBLICÁVEL (pk_...)
+NEXT_PUBLIC_STRIPE_SECRET_KEY=pk_test_...   # inserir a chave PUBLICÁVEL (pk_...)
 
 # Upstash Redis
 UPSTASH_REDIS_REST_URL=https://...upstash.io
@@ -78,7 +78,7 @@ NEXT_PUBLIC_CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 ```
 
-### 3. Arrancar
+### 3. Rodar
 
 ```bash
 npm run dev
@@ -96,4 +96,4 @@ Usa o cartão de teste do Stripe `4242 4242 4242 4242`, com qualquer data futura
 
 ## Autor
 
-**Cleyton Tembe** — [GitHub](https://github.com/Cleyton-Tembe)
+**Cleyton Tembe** - [GitHub](https://github.com/Cleyton-Tembe)
