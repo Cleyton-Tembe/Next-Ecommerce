@@ -1,20 +1,20 @@
 "use client";
-import { UserContext } from "@/Context/UserContext";
+import { useUser } from "@/hooks/useUser";
 import AxiosInstance from "@/lib/axio";
 import { motion } from "framer-motion";
 import { ArrowRight, Link, Loader, LogIn, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { handleAuth } = useContext(UserContext);
+  const { handleAuth } = useUser();
   const router = useRouter();
   const loading = false;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     console.log(email, password);
     try {
@@ -27,7 +27,7 @@ const Login = () => {
       await handleAuth();
       router.replace("/");
     } catch (error) {
-      toast.error("Well try again");
+      toast.error("Sorry boss tava dormir");
       console.error("handleSubmit Login: ", error);
     }
   };

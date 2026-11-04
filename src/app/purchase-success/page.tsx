@@ -1,11 +1,11 @@
 "use client";
 
-import CartContext from "@/Context/CartContext";
 import AxiosInstance from "@/lib/axio";
 import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
 import Confetti from "react-confetti";
 import Link from "next/link";
-import { use, useContext, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
+import { useCart } from "@/hooks/useCart";
 
 const PurchaseSuccess = ({
   searchParams,
@@ -14,7 +14,7 @@ const PurchaseSuccess = ({
 }) => {
   const { session_id } = use(searchParams);
   const [isProcessing, setIsProcessing] = useState<boolean>(true);
-  const { clearCart } = useContext(CartContext);
+  const { clearCart } = useCart();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

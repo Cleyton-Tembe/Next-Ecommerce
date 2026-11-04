@@ -1,25 +1,19 @@
-import { createContext, ReactNode, useState } from "react"
+"use client";
+import { createContext, Dispatch, ReactNode, SetStateAction, useMemo, useState } from "react";
 
+export type LoadingContextType = {
+  loading: boolean;
+  setLoading: Dispatch<SetStateAction<boolean>>;
+};
 
+export const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
-type LoadingType = {
-    loading: boolean,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>
-}
+const LoadingProvider = ({ children }: { children: ReactNode }) => {
+  const [loading, setLoading] = useState(false);
 
-export const LoadingContext = createContext<LoadingType | undefined>(undefined)
+  const value = useMemo(() => ({ loading, setLoading }), [loading]);
 
+  return <LoadingContext.Provider value={value}>{children}</LoadingContext.Provider>;
+};
 
-const LoadingProvider = ({children}: {children: ReactNode}) => {
-
-    const [loading, setLoading] = useState<boolean>(false)
-
-
-  return (
-    <LoadingContext.Provider value={{loading, setLoading}}>
-        {children}
-    </LoadingContext.Provider>
-  )
-}
-
-export default LoadingProvider
+export default LoadingProvider;

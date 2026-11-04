@@ -1,37 +1,61 @@
 "use client";
-import { createContext, ReactNode, useState } from "react";
-import AxiosInstance from "../lib/axio";
-import { redirect, RedirectType } from "next/navigation";
+import AxiosInstance from "@/lib/axio";
+import type { AuthUser, AuthUserResponse } from "@/types/User";
+import { useRouter } from "next/navigation";
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 
-export const UserContext = createContext();
+export type { AuthUser, UserRole } from "@/types/User";
+
+export interface UserContextType {
+  authUser: AuthUser | null;
+  setAuthUser: Dispatch<SetStateAction<AuthUser | null>>;
+  authLoading: boolean;
+  setAuthLoading: Dispatch<SetStateAction<boolean>>;
+  handleAuth: () => Promise<void>;
+}
+
+export const UserContext = createContext<UserContextType | undefined>(
+  undefined,
+);
 
 const UserProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
   const [authLoading, setAuthLoading] = useState(false);
-  const [authUser, setAuthUser] = useState(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
-  const handleAuth = async () => {
+  const handleAuth = useCallback(async () => {
     setAuthLoading(true);
     try {
-      console.log("started here");
-      const response = await AxiosInstance.get("/auth/user");
-      console.log("done task", response.data.user);
-      if (!response?.data.user) redirect("/login", RedirectType.replace);
-      setAuthUser(response.data.user);
+      const { data } = await AxiosInstance.get<AuthUserResponse>("/auth/user");
+      if (data?.user) {
+        setAuthUser(data.user);
+      } else {
+        setAuthUser(null);
+        router.replace("/login");
+      }
     } catch (error) {
       console.error("handleAuth: ", error);
-      redirect("/login", RedirectType.replace);
+      setAuthUser(null);
+      router.replace("/login");
     } finally {
       setAuthLoading(false);
     }
-  };
+  }, [router]);
 
-  return (
-    <UserContext.Provider
-      value={{ authLoading, setAuthLoading, handleAuth, authUser, setAuthUser }}
-    >
-      {children}
-    </UserContext.Provider>
+  const value = useMemo<UserContextType>(
+    () => ({ authUser, setAuthUser, authLoading, setAuthLoading, handleAuth }),
+    [authUser, authLoading, handleAuth],
   );
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
 export default UserProvider;

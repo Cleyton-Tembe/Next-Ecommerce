@@ -1,7 +1,7 @@
-import CartContext from "@/Context/CartContext";
 import { ProductT } from "@/Context/ProductContext";
+import { useCart } from "@/hooks/useCart";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const FeaturedProducts = ({
   featuredProducts,
@@ -11,7 +11,7 @@ const FeaturedProducts = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(4);
 
-  const { addToCart } = useContext(CartContext);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const handleResize = () => {

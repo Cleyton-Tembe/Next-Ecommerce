@@ -2,11 +2,11 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Loader, Mail, User, UserPlus, Lock } from "lucide-react";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import AxiosInstance from "@/lib/axio";
 import toast from "react-hot-toast";
-import { redirect, RedirectType, useRouter } from "next/navigation";
-import UserContext from "@/Context/UserContext";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/useUser";
 
 const SignUpPage = () => {
   const loading = false;
@@ -17,9 +17,9 @@ const SignUpPage = () => {
     confirmPassword: "",
   });
   const router = useRouter();
-  const { handleAuth } = useContext(UserContext);
+  const { handleAuth } = useUser();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     try {
       await AxiosInstance.post("/auth/signup", {
@@ -32,7 +32,7 @@ const SignUpPage = () => {
       router.replace("/");
     } catch (error) {
       toast.error("something went wrong");
-      console.error("handleSubmit: ", error.response);
+      console.error("handleSubmit: ", error);
     } finally {
       setFormData({
         name: "",

@@ -3,14 +3,13 @@ import CartItem from "@/components/CartComponents/CartItem";
 import OrderSummary from "@/components/CartComponents/OrderSummary";
 import GiftCouponCard from "@/components/GiftCouponCard";
 import PeopleAlsoBought from "@/components/PeopleAlsoBought";
-import CartContext from "@/Context/CartContext";
+import { useCart } from "@/hooks/useCart";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { useContext } from "react";
 
 const CartPage = () => {
-  const { cart } = useContext(CartContext);
+  const { cart } = useCart();
   return (
     <div className="py-8 md:py-16">
       <div className="mx-auto max-w-7xl px-4 2xl:px-0">

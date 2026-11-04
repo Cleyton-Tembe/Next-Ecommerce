@@ -1,13 +1,13 @@
-import CartContext from "@/Context/CartContext";
 import { ProductT } from "@/Context/ProductContext";
-import { UserContext } from "@/Context/UserContext";
+
+import { useCart } from "@/hooks/useCart";
+import { useUser } from "@/hooks/useUser";
 import { ShoppingCart } from "lucide-react";
-import { useContext } from "react";
 import toast from "react-hot-toast";
 
 const ProductCard = ({ product }: { product: ProductT }) => {
-  const { authUser } = useContext(UserContext);
-  const { addToCart } = useContext(CartContext);
+  const { authUser } = useUser();
+  const { addToCart } = useCart();
 
   console.log("product: ", product);
   const handleAddToCart = () => {

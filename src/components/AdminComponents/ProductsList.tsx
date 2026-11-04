@@ -1,8 +1,9 @@
 "use client";
-import { ProductContext } from "@/Context/ProductContext";
+
+import { useProducts } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
 import { Star, Trash } from "lucide-react";
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 
 const ProductsList = () => {
   const {
@@ -10,7 +11,7 @@ const ProductsList = () => {
     deleteProduct,
     toggleFeaturedProduct,
     handleFetchAllProducts,
-  } = useContext(ProductContext);
+  } = useProducts();
 
   useEffect(() => {
     console.log("running this funcion at first render!");

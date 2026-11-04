@@ -1,165 +1,167 @@
 "use client";
 
 import AxiosInstance from "@/lib/axio";
-import { createContext, SubmitEvent, ReactNode, useState } from "react";
+import { getErrorMessage } from "@/lib/getErrorMessage";
+import type {
+  CreateProductResponse,
+  FeaturedProductsResponse,
+  Product,
+  ProductInput,
+  ProductsResponse,
+  ToggleFeaturedResponse,
+} from "@/types/Product";
+import {
+  createContext,
+  Dispatch,
+  FormEvent,
+  ReactNode,
+  SetStateAction,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 
-type ProductsData = {
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image: string;
-  isFeatured: boolean;
-};
+// Re-exportados para não partir `import { ProductT } from "./ProductContext"`.
+export type { Product, ProductInput } from "@/types/Product";
+export type ProductT = Product;
+export type ProductsData = ProductInput;
 
-export type ProductT = ProductsData & {
-  _id: string;
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-interface ProductContextType {
-  products: ProductT[];
-  setProducts: React.Dispatch<React.SetStateAction<ProductT[]>>;
-  handleCreateProducts: (
-    e: SubmitEvent<HTMLFormElement>,
-    productsData: ProductsData,
-  ) => Promise<void>;
+export interface ProductContextType {
+  products: Product[];
+  setProducts: Dispatch<SetStateAction<Product[]>>;
+  handleCreateProducts: (e: FormEvent<HTMLFormElement>, productsData: ProductInput) => Promise<void>;
   handleFetchAllProducts: () => Promise<void>;
   fetchProductsByCategory: (category: string) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
   toggleFeaturedProduct: (productId: string) => Promise<void>;
   fetchFeaturedProducts: () => Promise<void>;
   loading: boolean;
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-export const ProductContext = createContext<ProductContextType | undefined>(
-  undefined,
-);
+export const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 const ProductProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<ProductT[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleCreateProducts = async (
-    e: SubmitEvent,
-    productsData: ProductsData,
-  ) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      const response = await AxiosInstance.post("/products/new", productsData);
-      if (response.data?.product) {
-        setProducts((prev) => [...prev, response.data.product]);
+  const handleCreateProducts = useCallback(
+    async (e: FormEvent<HTMLFormElement>, productsData: ProductInput) => {
+      e.preventDefault();
+      try {
+        setLoading(true);
+        const { data } = await AxiosInstance.post<CreateProductResponse>("/products/new", productsData);
+        if (data?.product) {
+          setProducts((prev) => [...prev, data.product]);
+        }
+      } catch (error) {
+        console.error("handleCreateProducts Context: ", error);
+        toast.error(getErrorMessage(error, "Failed to create product"));
+      } finally {
+        setLoading(false);
       }
+    },
+    [],
+  );
+
+  const handleFetchAllProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await AxiosInstance.get<ProductsResponse>("/products");
+      setProducts(data.products ?? []);
     } catch (error) {
-      console.error("handleCreateProducts Context: ", error);
+      // em caso de erro mantém os produtos que já estavam no ecrã
+      console.error("handleFetchAllProducts: ", error);
+      toast.error(getErrorMessage(error, "Failed to fetch products"));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleFetchAllProducts = async () => {
-    const fallbackP = products;
+  const fetchProductsByCategory = useCallback(async (category: string) => {
     try {
       setLoading(true);
-      const response = await AxiosInstance.get("/products");
-      console.log("reponse: ", response);
-      setProducts(response.data.products);
-    } catch (error) {
-      setProducts(fallbackP);
-      console.log("handleFetchAllProducts: ", error);
-      toast.error(error.response.data.error || "Failed to fetch products");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchProductsByCategory = async (category: string) => {
-    try {
-      setLoading(true);
-      const response = await AxiosInstance.get(
-        `/products/categorys/${category}`,
+      const { data } = await AxiosInstance.get<ProductsResponse>(
+        `/products/categorys/${encodeURIComponent(category)}`,
       );
-      setProducts(response.data.products);
+      setProducts(data.products ?? []);
     } catch (error) {
-      console.log("FetchProductsByCategory: ", error);
-      toast.error(error.response.data.error || "Failed to fetch products");
+      console.error("FetchProductsByCategory: ", error);
+      toast.error(getErrorMessage(error, "Failed to fetch products"));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const deleteProduct = async (productId: string) => {
+  const deleteProduct = useCallback(async (productId: string) => {
     try {
       setLoading(true);
       await AxiosInstance.delete(`/products/delete/${productId}`);
-      setProducts((prevProducts) =>
-        prevProducts.filter((product) => product._id !== productId),
-      );
+      setProducts((prev) => prev.filter((product) => product._id !== productId));
     } catch (error) {
-      console.log("deleteProduct: ", error);
-      toast.error(error.response.data.error || "Failed to delete product");
+      console.error("deleteProduct: ", error);
+      toast.error(getErrorMessage(error, "Failed to delete product"));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const toggleFeaturedProduct = async (productId: string) => {
+  const toggleFeaturedProduct = useCallback(async (productId: string) => {
     try {
       setLoading(true);
-      const response = await AxiosInstance.patch(
-        `/products/features/${productId}`,
-      );
-      // this will update the isFeatured prop of the product
-      console.log(response);
-      setProducts((prevProducts) =>
-        prevProducts.map((product) =>
-          product._id === productId
-            ? { ...product, isFeatured: response.data.updatedProd.isFeatured }
-            : product,
+      const { data } = await AxiosInstance.patch<ToggleFeaturedResponse>(`/products/features/${productId}`);
+      setProducts((prev) =>
+        prev.map((product) =>
+          product._id === productId ? { ...product, isFeatured: data.updatedProd.isFeatured } : product,
         ),
       );
     } catch (error) {
-      console.log("toggleFeaturedProduct: ", error);
-      toast.error(error.response.data.error || "Failed to update product");
+      console.error("toggleFeaturedProduct: ", error);
+      toast.error(getErrorMessage(error, "Failed to update product"));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchFeaturedProducts = async () => {
+  const fetchFeaturedProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await AxiosInstance.get("/products/features");
-      setProducts(response.data.fproducts);
+      const { data } = await AxiosInstance.get<FeaturedProductsResponse>("/products/features");
+      setProducts(data.fproducts ?? []);
     } catch (error) {
-      console.log("Error fetching featured products:", error);
+      console.error("Error fetching featured products:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  return (
-    <ProductContext.Provider
-      value={{
-        products,
-        setProducts,
-        handleCreateProducts,
-        setLoading,
-        loading,
-        handleFetchAllProducts,
-        deleteProduct,
-        toggleFeaturedProduct,
-        fetchFeaturedProducts,
-        fetchProductsByCategory,
-      }}
-    >
-      {children}
-    </ProductContext.Provider>
+  const value = useMemo<ProductContextType>(
+    () => ({
+      products,
+      setProducts,
+      handleCreateProducts,
+      handleFetchAllProducts,
+      fetchProductsByCategory,
+      deleteProduct,
+      toggleFeaturedProduct,
+      fetchFeaturedProducts,
+      loading,
+      setLoading,
+    }),
+    [
+      products,
+      handleCreateProducts,
+      handleFetchAllProducts,
+      fetchProductsByCategory,
+      deleteProduct,
+      toggleFeaturedProduct,
+      fetchFeaturedProducts,
+      loading,
+    ],
   );
+
+  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 };
 
 export default ProductProvider;

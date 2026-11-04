@@ -1,11 +1,12 @@
 import CartContext from "@/Context/CartContext";
+import { useCart } from "@/hooks/useCart";
 import { motion } from "framer-motion";
 import { useContext, useEffect, useState } from "react";
 
 const GiftCouponCard = () => {
   const [userInputCode, setUserInputCode] = useState("");
   const { coupon, isCouponApplied, applyCoupon, getMyCoupon, removeCoupon } =
-    useContext(CartContext);
+    useCart();
 
   useEffect(() => {
     console.log("rendering by getMycoupon");

@@ -1,12 +1,12 @@
 "use client";
 
-import { useContext, useEffect } from "react";
-import { UserContext } from "@/Context/UserContext";
+import { useEffect } from "react";
 import LoadingSpinner from "@/components/Global/LoadingSpinner";
 import CategoryItem from "@/components/CategoryItem";
-import CartContext from "@/Context/CartContext";
-import { ProductContext } from "@/Context/ProductContext";
 import FeaturedProducts from "@/components/ProductComponents/FeaturedProducts";
+import { useUser } from "@/hooks/useUser";
+import { useCart } from "@/hooks/useCart";
+import { useProducts } from "@/hooks/useProducts";
 
 const categories = [
   { href: "/jeans", name: "Jeans", imageUrl: "/jeans.jpg" },
@@ -19,10 +19,10 @@ const categories = [
 ];
 
 export default function Home() {
-  const { handleAuth, authUser, authLoading } = useContext(UserContext);
+  const { handleAuth, authUser, authLoading } = useUser();
 
-  const { getCartItems } = useContext(CartContext);
-  const { fetchFeaturedProducts, products } = useContext(ProductContext);
+  const { getCartItems } = useCart();
+  const { fetchFeaturedProducts, products } = useProducts();
   console.log("home: ", authUser);
   useEffect(() => {
     async function ReturnAuth() {

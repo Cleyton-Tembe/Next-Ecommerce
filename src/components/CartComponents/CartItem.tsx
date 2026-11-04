@@ -1,11 +1,11 @@
-import CartContext, { Product } from "@/Context/CartContext";
+import { Product } from "@/Context/CartContext";
+import { useCart } from "@/hooks/useCart";
 import { Minus, Plus, Trash } from "lucide-react";
-import { useContext } from "react";
 
 type Item = Product & { quantity: number };
 
 const CartItem = ({ item }: { item: Item }) => {
-  const { removeFromCart, updateQuantity } = useContext(CartContext);
+  const { removeFromCart, updateQuantity } = useCart();
 
   return (
     <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">

@@ -1,17 +1,16 @@
 "use client";
 import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
 import Link from "next/link";
-import { UserContext } from "@/Context/UserContext";
-import { useContext } from "react";
 import AxiosInstance from "@/lib/axio";
 import toast from "react-hot-toast";
 import { redirect, RedirectType } from "next/navigation";
-import CartContext from "@/Context/CartContext";
+import { useUser } from "@/hooks/useUser";
+import { useCart } from "@/hooks/useCart";
 
 const NavBar = () => {
-  const { authUser: user, setAuthUser } = useContext(UserContext);
+  const { authUser: user, setAuthUser } = useUser();
 
-  const { cart } = useContext(CartContext);
+  const { cart } = useCart();
 
   const handleLogout = async () => {
     try {

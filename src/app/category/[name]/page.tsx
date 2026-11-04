@@ -1,13 +1,13 @@
 "use client";
 
 import ProductCard from "@/components/ProductComponents/ProductCard";
-import { ProductContext } from "@/Context/ProductContext";
+import { useProducts } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
-import { use, useContext, useEffect } from "react";
+import { use, useEffect } from "react";
 
 const Categorypage = ({ params }: { params: Promise<{ name: string }> }) => {
   const { name: category } = use(params);
-  const { fetchProductsByCategory, products } = useContext(ProductContext);
+  const { fetchProductsByCategory, products } = useProducts();
 
   useEffect(() => {
     console.log("started");
