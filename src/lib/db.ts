@@ -1,14 +1,13 @@
-"use server"
+import "server-only";
 
 import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.NEXT_DB_URL;
 
 if (!MONGODB_URI) {
-  throw new Error("Por favor, defina a variável MONGODB_URI no seu .env.local");
+  throw new Error("Por favor, defina NEXT_DB_URL no ficheiro .env.local");
 }
 
-// Estende o objeto global do Node para não dar erro de tipo com o TypeScript
 interface GlobalMongoose {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -18,34 +17,25 @@ declare global {
   var mongooseGlobal: GlobalMongoose | undefined;
 }
 
-// Se já existir uma conexão global, usamos ela. Se não, criamos o objeto.
-let cached = globalThis.mongooseGlobal;
+const cached = (globalThis.mongooseGlobal ??= {
+  conn: null,
+  promise: null,
+});
 
-if (!cached) {
-  cached = globalThis.mongooseGlobal = { conn: null, promise: null };
-}
-
-export async function connectDB() {
-  // Se já estiver conectado, apenas retorna a conexão existente
-  if (cached?.conn) {
+export async function connectDB(): Promise<typeof mongoose> {
+  if (cached.conn) {
     return cached.conn;
   }
 
-  // Se não houver uma promessa de conexão ativa, cria uma nova
-  if (!cached?.promise) {
-
-    cached.promise = mongoose
-      .connect(MONGODB_URI!,)
-      .then((mongooseInstance) => {
-        return mongooseInstance;
-      });
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI);
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+  } catch (error) {
     cached.promise = null;
-    throw e;
+    throw error;
   }
 
   return cached.conn;

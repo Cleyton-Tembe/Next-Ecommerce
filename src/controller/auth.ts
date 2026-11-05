@@ -73,7 +73,10 @@ export async function Login(req: NextRequest) {
     const dbuser = await User.findOne({ email: email });
 
     if (!dbuser) {
-      return NextResponse.json({ message: "user not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "you're not signed in" },
+        { status: 404 },
+      );
     }
 
     const isPwdCorrect = dbuser.ComparePassword(password);

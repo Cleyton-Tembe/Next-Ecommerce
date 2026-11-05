@@ -39,12 +39,10 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
         setAuthUser(data.user);
       } else {
         setAuthUser(null);
-        router.replace("/login");
       }
     } catch (error) {
       console.error("handleAuth: ", error);
       setAuthUser(null);
-      router.replace("/login");
     } finally {
       setAuthLoading(false);
     }

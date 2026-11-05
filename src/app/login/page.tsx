@@ -2,8 +2,9 @@
 import { useUser } from "@/hooks/useUser";
 import AxiosInstance from "@/lib/axio";
 import { motion } from "framer-motion";
-import { ArrowRight, Link, Loader, LogIn, Mail, Lock } from "lucide-react";
+import { ArrowRight, Loader, LogIn, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -26,8 +27,12 @@ const Login = () => {
 
       await handleAuth();
       router.replace("/");
-    } catch (error) {
-      toast.error("Sorry boss tava dormir");
+    } catch (error: any) {
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Sorry boss mas trocamos cred na semana passada!");
+      }
       console.error("handleSubmit Login: ", error);
     }
   };
@@ -131,7 +136,7 @@ const Login = () => {
           <p className="mt-8 text-center text-sm text-gray-400">
             Not a member?{" "}
             <Link
-              to="/signup"
+              href="/signup"
               className="font-medium text-emerald-400 hover:text-emerald-300"
             >
               Sign up now <ArrowRight className="inline h-4 w-4" />

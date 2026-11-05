@@ -13,7 +13,6 @@ import type {
 import {
   createContext,
   Dispatch,
-  FormEvent,
   ReactNode,
   SetStateAction,
   useCallback,
@@ -22,7 +21,6 @@ import {
 } from "react";
 import toast from "react-hot-toast";
 
-// Re-exportados para não partir `import { ProductT } from "./ProductContext"`.
 export type { Product, ProductInput } from "@/types/Product";
 export type ProductT = Product;
 export type ProductsData = ProductInput;
@@ -30,9 +28,12 @@ export type ProductsData = ProductInput;
 export interface ProductContextType {
   products: Product[];
   setProducts: Dispatch<SetStateAction<Product[]>>;
-  handleCreateProducts: (e: FormEvent<HTMLFormElement>, productsData: ProductInput) => Promise<void>;
+  handleCreateProducts: (
+    e: React.SubmitEvent,
+    productsData: ProductInput,
+  ) => Promise<void>;
   handleFetchAllProducts: () => Promise<void>;
-  fetchProductsByCategory: (category: string) => Promise<void>;
+  fetchProductsByCategory: (category: string) => Promise<Product[]>;
   deleteProduct: (productId: string) => Promise<void>;
   toggleFeaturedProduct: (productId: string) => Promise<void>;
   fetchFeaturedProducts: () => Promise<void>;
@@ -40,18 +41,23 @@ export interface ProductContextType {
   setLoading: Dispatch<SetStateAction<boolean>>;
 }
 
-export const ProductContext = createContext<ProductContextType | undefined>(undefined);
+export const ProductContext = createContext<ProductContextType | undefined>(
+  undefined,
+);
 
 const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleCreateProducts = useCallback(
-    async (e: FormEvent<HTMLFormElement>, productsData: ProductInput) => {
+    async (e: React.SubmitEvent, productsData: ProductInput) => {
       e.preventDefault();
       try {
         setLoading(true);
-        const { data } = await AxiosInstance.post<CreateProductResponse>("/products/new", productsData);
+        const { data } = await AxiosInstance.post<CreateProductResponse>(
+          "/products/new",
+          productsData,
+        );
         if (data?.product) {
           setProducts((prev) => [...prev, data.product]);
         }
@@ -85,10 +91,11 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await AxiosInstance.get<ProductsResponse>(
         `/products/categorys/${encodeURIComponent(category)}`,
       );
-      setProducts(data.products ?? []);
+      return data.products ?? [];
     } catch (error) {
       console.error("FetchProductsByCategory: ", error);
       toast.error(getErrorMessage(error, "Failed to fetch products"));
+      return [];
     } finally {
       setLoading(false);
     }
@@ -98,7 +105,9 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
     try {
       setLoading(true);
       await AxiosInstance.delete(`/products/delete/${productId}`);
-      setProducts((prev) => prev.filter((product) => product._id !== productId));
+      setProducts((prev) =>
+        prev.filter((product) => product._id !== productId),
+      );
     } catch (error) {
       console.error("deleteProduct: ", error);
       toast.error(getErrorMessage(error, "Failed to delete product"));
@@ -110,10 +119,14 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
   const toggleFeaturedProduct = useCallback(async (productId: string) => {
     try {
       setLoading(true);
-      const { data } = await AxiosInstance.patch<ToggleFeaturedResponse>(`/products/features/${productId}`);
+      const { data } = await AxiosInstance.patch<ToggleFeaturedResponse>(
+        `/products/features/${productId}`,
+      );
       setProducts((prev) =>
         prev.map((product) =>
-          product._id === productId ? { ...product, isFeatured: data.updatedProd.isFeatured } : product,
+          product._id === productId
+            ? { ...product, isFeatured: data.updatedProd.isFeatured }
+            : product,
         ),
       );
     } catch (error) {
@@ -127,7 +140,8 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
   const fetchFeaturedProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await AxiosInstance.get<FeaturedProductsResponse>("/products/features");
+      const { data } =
+        await AxiosInstance.get<FeaturedProductsResponse>("/products/features");
       setProducts(data.fproducts ?? []);
     } catch (error) {
       console.error("Error fetching featured products:", error);
@@ -161,7 +175,9 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
     ],
   );
 
-  return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
+  return (
+    <ProductContext.Provider value={value}>{children}</ProductContext.Provider>
+  );
 };
 
 export default ProductProvider;

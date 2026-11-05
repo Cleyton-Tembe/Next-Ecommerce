@@ -1,3 +1,4 @@
+import { connectDB } from "@/lib/db";
 import Order from "@/model/order";
 import Product from "@/model/product";
 import User from "@/model/user";
@@ -5,6 +6,8 @@ import { NextResponse } from "next/server";
 
 export async function getAnalitics() {
   try {
+    await connectDB();
+
     const analitics = await getAnaliticsData();
 
     const endDate = new Date();
@@ -34,7 +37,7 @@ export async function getAnaliticsData() {
         $group: {
           _id: null,
           totalSales: { $sum: 1 },
-          totalRevenue: { $sum: "totalAmount" },
+          totalRevenue: { $sum: "$totalAmount" },
         },
       },
     ]);
@@ -52,6 +55,7 @@ export async function getAnaliticsData() {
     };
   } catch (error) {
     console.error("getAnaliticsData: ", error);
+    throw error;
   }
 }
 
@@ -76,17 +80,7 @@ export const getDailySalesData = async (startDate: Date, endDate: Date) => {
       { $sort: { _id: 1 } },
     ]);
 
-    // example of dailySalesData
-    // [
-    // 	{
-    // 		_id: "2024-08-18",
-    // 		sales: 12,
-    // 		revenue: 1450.75
-    // 	},
-    // ]
-
     const dateArray = getDatesInRange(startDate, endDate);
-    // console.log(dateArray) // ['2024-08-18', '2024-08-19', ... ]
 
     return dateArray.map((date) => {
       const foundData = dailySalesData.find((item) => item._id === date);

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import redis from "@/lib/redis-db";
 import { CheckAdmin } from "@/middleware/admin";
 import Product from "@/model/product";
+import { Product as ProductType } from "@/types/Product";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -199,32 +200,19 @@ export async function GetRecommendedProd() {
 }
 
 export async function GetProdByCategory(
-  req: NextRequest,
-  { params }: { params: Promise<{ name: string }> },
-) {
-  try {
-    await connectDB();
+  category: string,
+): Promise<ProductType[]> {
+  await connectDB();
 
-    const { name } = await params;
-    console.log("something happening: ", name);
+  const products = await Product.find({
+    category,
+  }).lean();
 
-    const products = await Product.find({ category: name });
-
-    if (!products) {
-      return NextResponse.json({ message: "no products" }, { status: 405 });
-    }
-
-    console.log("the products: ", products);
-    return NextResponse.json({ products: products });
-  } catch (error) {
-    console.error("GetProdByCategory", error);
-    return NextResponse.json(
-      { message: "something went wrong" },
-      { status: 500 },
-    );
-  }
+  return products.map((product) => ({
+    ...product,
+    _id: product._id.toString(),
+  }));
 }
-
 export async function ToggleFeaturedProd(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
