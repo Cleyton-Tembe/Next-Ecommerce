@@ -1,5 +1,5 @@
-import { jwtVerify, SignJWT } from "jose";
-import { NextRequest, NextResponse } from "next/server";
+import { SignJWT } from "jose";
+import { NextResponse } from "next/server";
 import { getSecret } from "./helperFn";
 
 type CookieUser = {

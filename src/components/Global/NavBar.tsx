@@ -26,9 +26,9 @@ const NavBar = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex flex-wrap justify-between items-center">
+    <header className="fixed top-0 left-0 z-40 h-16 w-full border-b border-emerald-800/40 bg-gray-900/80 shadow-lg backdrop-blur-md transition-all duration-300">
+      <div className="container mx-auto flex h-full items-center px-4">
+        <div className="flex w-full items-center justify-between gap-4">
           <Link
             href="/"
             className="text-2xl font-bold text-emerald-400 items-center space-x-2 flex"
@@ -36,7 +36,7 @@ const NavBar = () => {
             E-Commerce
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-4">
+          <nav className="flex items-center gap-3 sm:gap-4">
             <Link
               href="/"
               className="text-gray-300 hover:text-emerald-400 transition duration-300

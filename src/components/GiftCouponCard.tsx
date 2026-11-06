@@ -1,7 +1,6 @@
-import CartContext from "@/Context/CartContext";
 import { useCart } from "@/hooks/useCart";
 import { motion } from "framer-motion";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const GiftCouponCard = () => {
   const [userInputCode, setUserInputCode] = useState("");

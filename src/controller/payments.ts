@@ -3,12 +3,30 @@ import GetAuthUserHeader from "@/lib/helperFn";
 import { stripe } from "@/lib/stripe";
 import Coupon from "@/model/coupon";
 import Order from "@/model/order";
+import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
+
+type CheckoutProduct = {
+  _id: string;
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
+};
+
+type MetadataProduct = {
+  id: string;
+  quantity: number;
+  price: number;
+};
 
 export const CreateCheckoutSession = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const { products, couponCode } = body;
+    const { products, couponCode } = body as {
+      products: CheckoutProduct[];
+      couponCode?: string | null;
+    };
 
     if (!Array.isArray(products) || products.length === 0) {
       return NextResponse.json(
@@ -20,7 +38,7 @@ export const CreateCheckoutSession = async (req: NextRequest) => {
     let totalAmount = 0;
 
     const lineItems = products.map((product) => {
-      const amount = Math.round(product.price * 100); // stripe wants u to send in the format of cents
+      const amount = Math.round(product.price * 100); //
       totalAmount += amount * product.quantity;
 
       return {
@@ -39,6 +57,9 @@ export const CreateCheckoutSession = async (req: NextRequest) => {
     await connectDB();
 
     const user = await GetAuthUserHeader(req);
+    if (!user) {
+      return NextResponse.json({ message: "user not found" }, { status: 401 });
+    }
 
     let coupon = null;
     if (couponCode) {
@@ -54,12 +75,15 @@ export const CreateCheckoutSession = async (req: NextRequest) => {
       }
     }
 
+    // Inproduction real (ex.: https://teu-site.vercel.app)
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || req.nextUrl.origin;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${"http://localhost:3000"}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${"http://localhost:3000"}/purchase-cancel`,
+      success_url: `${baseUrl}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/purchase-cancel`,
       discounts: coupon
         ? [
             {
@@ -105,7 +129,7 @@ export async function CreateStripeCoupon(discountPercentage: number) {
   return coupon.id;
 }
 
-export async function CreateNewCoupon(userId: string) {
+export async function CreateNewCoupon(userId: Types.ObjectId | string) {
   await Coupon.findOneAndDelete({ userId });
 
   const newCoupon = new Coupon({
@@ -122,51 +146,75 @@ export async function CreateNewCoupon(userId: string) {
 
 export async function CheckoutSuccess(req: NextRequest) {
   try {
-    console.log("here! stated!!!!");
+    await connectDB();
+
     const body = await req.json();
-    const { session_id } = body;
+    const { session_id } = body as { session_id?: string };
+
+    if (!session_id) {
+      return NextResponse.json(
+        { message: "session_id is required" },
+        { status: 400 },
+      );
+    }
 
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    if (session.payment_status === "paid") {
-      if (session.metadata?.couponCode) {
-        await Coupon.findOneAndUpdate(
-          {
-            code: session.metadata.couponCode,
-            userId: session.metadata.userId,
-          },
-          {
-            isActive: false,
-          },
-        );
-      }
-
-      if (session.metadata) {
-        const products = JSON.parse(session.metadata.products);
-        const order = new Order({
-          user: session.metadata.userId,
-          products: products.map((prod) => ({
-            product: prod.id,
-            quantity: prod.quantity,
-            price: prod.price,
-          })),
-          totalAmount: session.amount_total / 100,
-          stripeSessionId: session_id,
-        });
-
-        await order.save();
-
-        return NextResponse.json(
-          {
-            success: true,
-            message:
-              "Payment successful, order created, and coupon deactivated if used.",
-            orderId: order._id,
-          },
-          { status: 200 },
-        );
-      }
+    if (session.payment_status !== "paid" || !session.metadata) {
+      return NextResponse.json(
+        { message: "Payment not completed" },
+        { status: 400 },
+      );
     }
+
+    if (session.metadata.couponCode) {
+      await Coupon.findOneAndUpdate(
+        {
+          code: session.metadata.couponCode,
+          userId: session.metadata.userId,
+        },
+        {
+          isActive: false,
+        },
+      );
+    }
+
+    // Avoids recreate order when page reloads
+    const existingOrder = await Order.findOne({ stripeSessionId: session_id });
+    if (existingOrder) {
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Order already created",
+          orderId: existingOrder._id,
+        },
+        { status: 200 },
+      );
+    }
+
+    const products = JSON.parse(session.metadata.products) as MetadataProduct[];
+    const order = new Order({
+      user: session.metadata.userId,
+      products: products.map((prod) => ({
+        product: prod.id,
+        quantity: prod.quantity,
+        price: prod.price,
+      })),
+      totalAmount: (session.amount_total ?? 0) / 100,
+      stripeSessionId: session_id,
+    });
+
+    await order.save();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "Payment successful, order created, and coupon deactivated if used.",
+        orderId: order._id,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("CheckoutSuccess: ", error);
     return NextResponse.json(

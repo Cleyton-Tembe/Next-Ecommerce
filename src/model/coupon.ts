@@ -1,6 +1,19 @@
-import mongoose from "mongoose";
+import mongoose, { HydratedDocument, Model, Types } from "mongoose";
 
-const CouponSchema = new mongoose.Schema(
+export interface ICoupon {
+  code: string;
+  discountPercentage: number;
+  expirationDate: Date;
+  isActive: boolean;
+  userId: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type CouponModel = Model<ICoupon>;
+export type CouponDocument = HydratedDocument<ICoupon>;
+
+const CouponSchema = new mongoose.Schema<ICoupon, CouponModel>(
   {
     code: {
       type: String,
@@ -33,10 +46,8 @@ const CouponSchema = new mongoose.Schema(
   },
 );
 
-const Coupon = mongoose.models.Coupon || mongoose.model("Coupon", CouponSchema);
-
-if (!mongoose.models.Coupon) {
-  mongoose.models.Coupon = Coupon;
-}
+const Coupon =
+  (mongoose.models.Coupon as CouponModel | undefined) ||
+  mongoose.model<ICoupon, CouponModel>("Coupon", CouponSchema);
 
 export default Coupon;

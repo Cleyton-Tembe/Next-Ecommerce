@@ -1,7 +1,39 @@
 import bcrypt from "bcryptjs";
-import mongoose from "mongoose";
+import mongoose, { HydratedDocument, Model, Types } from "mongoose";
 
-const UserSchema = new mongoose.Schema(
+export interface ICartItem {
+  quantity: number;
+  product?: Types.ObjectId;
+}
+
+export interface IUser {
+  name: string;
+  email: string;
+  password: string;
+  cartItems: ICartItem[];
+  role: "customer" | "admin";
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IUserMethods {
+  ComparePassword(password: string): Promise<boolean>;
+}
+
+export type UserDocument = HydratedDocument<
+  IUser,
+  IUserMethods & { cartItems: Types.DocumentArray<ICartItem> }
+>;
+
+export type UserModel = Model<
+  IUser,
+  Record<string, never>,
+  IUserMethods,
+  Record<string, never>,
+  UserDocument
+>;
+
+const UserSchema = new mongoose.Schema<IUser, UserModel, IUserMethods>(
   {
     name: {
       type: String,
@@ -62,10 +94,8 @@ UserSchema.methods.ComparePassword = async function (password: string) {
   return bcrypt.compare(password, this.password);
 };
 
-const User = mongoose.models.User || mongoose.model("User", UserSchema);
-
-if (!mongoose.models.User) {
-  mongoose.models.User = User;
-}
+const User =
+  (mongoose.models.User as UserModel | undefined) ||
+  mongoose.model<IUser, UserModel>("User", UserSchema);
 
 export default User;

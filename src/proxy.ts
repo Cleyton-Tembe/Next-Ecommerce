@@ -23,16 +23,12 @@ export default async function middleware(req: NextRequest) {
     }
 
     const decoded = await getDecodedToken(token);
-    console.log("decoded: ", decoded);
-    if (!decoded) {
+    if (!decoded?.user) {
       return NextResponse.json(
         { message: "Token not authorized" },
         { status: 401 },
       );
     }
-
-    // if (!mongoose.isValidObjectId(decoded.userid)){
-    //   return NextResponse.json({ message: "token not valid" }, { status: 401 })};
 
     const requestHeaders = new Headers(req.headers);
 

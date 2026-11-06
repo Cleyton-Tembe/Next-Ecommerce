@@ -33,7 +33,6 @@ export interface ProductContextType {
     productsData: ProductInput,
   ) => Promise<void>;
   handleFetchAllProducts: () => Promise<void>;
-  fetchProductsByCategory: (category: string) => Promise<Product[]>;
   deleteProduct: (productId: string) => Promise<void>;
   toggleFeaturedProduct: (productId: string) => Promise<void>;
   fetchFeaturedProducts: () => Promise<void>;
@@ -77,25 +76,8 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await AxiosInstance.get<ProductsResponse>("/products");
       setProducts(data.products ?? []);
     } catch (error) {
-      // em caso de erro mantém os produtos que já estavam no ecrã
       console.error("handleFetchAllProducts: ", error);
       toast.error(getErrorMessage(error, "Failed to fetch products"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchProductsByCategory = useCallback(async (category: string) => {
-    try {
-      setLoading(true);
-      const { data } = await AxiosInstance.get<ProductsResponse>(
-        `/products/categorys/${encodeURIComponent(category)}`,
-      );
-      return data.products ?? [];
-    } catch (error) {
-      console.error("FetchProductsByCategory: ", error);
-      toast.error(getErrorMessage(error, "Failed to fetch products"));
-      return [];
     } finally {
       setLoading(false);
     }
@@ -156,7 +138,6 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
       setProducts,
       handleCreateProducts,
       handleFetchAllProducts,
-      fetchProductsByCategory,
       deleteProduct,
       toggleFeaturedProduct,
       fetchFeaturedProducts,
@@ -167,7 +148,6 @@ const ProductProvider = ({ children }: { children: ReactNode }) => {
       products,
       handleCreateProducts,
       handleFetchAllProducts,
-      fetchProductsByCategory,
       deleteProduct,
       toggleFeaturedProduct,
       fetchFeaturedProducts,

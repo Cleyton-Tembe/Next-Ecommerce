@@ -1,7 +1,7 @@
 "use client";
 import AxiosInstance from "@/lib/axio";
 import type { AuthUser, AuthUserResponse } from "@/types/User";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import {
   createContext,
   Dispatch,
@@ -39,6 +39,7 @@ const UserProvider = ({ children }: { children: ReactNode }) => {
         setAuthUser(data.user);
       } else {
         setAuthUser(null);
+        router.replace("/login");
       }
     } catch (error) {
       console.error("handleAuth: ", error);

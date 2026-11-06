@@ -1,6 +1,24 @@
-import mongoose from "mongoose";
+import mongoose, { HydratedDocument, Model, Types } from "mongoose";
 
-const OrderSchema = new mongoose.Schema(
+export interface IOrderItem {
+  product: Types.ObjectId;
+  quantity: number;
+  price: number;
+}
+
+export interface IOrder {
+  user: Types.ObjectId;
+  products: IOrderItem[];
+  totalAmount: number;
+  stripeSessionId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type OrderModel = Model<IOrder>;
+export type OrderDocument = HydratedDocument<IOrder>;
+
+const OrderSchema = new mongoose.Schema<IOrder, OrderModel>(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -39,10 +57,8 @@ const OrderSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const Order = mongoose.models.Order || mongoose.model("Order", OrderSchema);
-
-if (!mongoose.models.Order) {
-  mongoose.models.Order = Order;
-}
+const Order =
+  (mongoose.models.Order as OrderModel | undefined) ||
+  mongoose.model<IOrder, OrderModel>("Order", OrderSchema);
 
 export default Order;

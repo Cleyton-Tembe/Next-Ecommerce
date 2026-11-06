@@ -3,8 +3,8 @@ import { connectDB } from "@/lib/db";
 import redis from "@/lib/redis-db";
 import { CheckAdmin } from "@/middleware/admin";
 import Product from "@/model/product";
-import { Product as ProductType } from "@/types/Product";
 import mongoose from "mongoose";
+import { Product as ProductType } from "@/types/Product";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GetEveryProduct() {
@@ -34,7 +34,7 @@ export async function GetFeaturedProducts() {
   try {
     await connectDB();
 
-    let featuredProd: any = await redis.get("featured_products");
+    let featuredProd: unknown = await redis.get("featured_products");
 
     console.log("featured product: ", featuredProd);
     if (featuredProd) return NextResponse.json({ fproducts: featuredProd });
@@ -84,7 +84,7 @@ export async function CreateProduct(req: NextRequest) {
       folder: "products",
     });
 
-    const product = Product.create({
+    const product = await Product.create({
       name,
       description,
       image: cloudresponse?.secure_url ? cloudresponse.secure_url : "",
@@ -125,7 +125,7 @@ export async function DeleteProduct(
         { status: 400 },
       );
 
-    const product = await Product.findById({ _id: id });
+    const product = await Product.findById(id);
 
     if (!product)
       return NextResponse.json(
@@ -148,7 +148,7 @@ export async function DeleteProduct(
       }
     }
 
-    await Product.findByIdAndDelete({ _id: id });
+    await Product.findByIdAndDelete(id);
     await UpdateFeatureProdCache();
 
     return NextResponse.json(
@@ -204,13 +204,20 @@ export async function GetProdByCategory(
 ): Promise<ProductType[]> {
   await connectDB();
 
-  const products = await Product.find({
-    category,
-  }).lean();
+  const products = await Product.find({ category })
+    .sort({ createdAt: -1 })
+    .lean();
 
-  return products.map((product) => ({
-    ...product,
-    _id: product._id.toString(),
+  return products.map((p) => ({
+    _id: String(p._id),
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    image: p.image,
+    category: p.category,
+    isFeatured: Boolean(p.isFeatured),
+    createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : undefined,
+    updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString() : undefined,
   }));
 }
 export async function ToggleFeaturedProd(
@@ -234,9 +241,7 @@ export async function ToggleFeaturedProd(
         { status: 400 },
       );
 
-    const product = await Product.findById({
-      _id: new mongoose.Types.ObjectId(id),
-    });
+    const product = await Product.findById(id);
 
     if (!product)
       return NextResponse.json(
@@ -262,7 +267,7 @@ export async function UpdateFeatureProdCache() {
     await connectDB();
 
     const featuredProd = await Product.find({ isFeatured: true }).lean();
-    await redis.set("featured_products", JSON.stringify(featuredProd));
+    await redis.set("featured_products", featuredProd);
 
     return NextResponse.json({ message: "success" }, { status: 200 });
   } catch (error) {

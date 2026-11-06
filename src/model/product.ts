@@ -1,6 +1,20 @@
-import mongoose from "mongoose";
+import mongoose, { HydratedDocument, Model } from "mongoose";
 
-const ProductSchema = new mongoose.Schema(
+export interface IProduct {
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  isFeatured: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ProductModel = Model<IProduct>;
+export type ProductDocument = HydratedDocument<IProduct>;
+
+const ProductSchema = new mongoose.Schema<IProduct, ProductModel>(
   {
     name: {
       type: String,
@@ -34,12 +48,7 @@ const ProductSchema = new mongoose.Schema(
 );
 
 const Product =
-  mongoose.models.Product || mongoose.model("Product", ProductSchema);
-
-// Se o modelo já existiu nos modelos cacheados, use-o.
-// Se não, crie um novo. Isso impede que o Mongoose tente criar o mesmo modelo duas vezes.
-if (!mongoose.models.Product) {
-  mongoose.models.Product = Product;
-}
+  (mongoose.models.Product as ProductModel | undefined) ||
+  mongoose.model<IProduct, ProductModel>("Product", ProductSchema);
 
 export default Product;

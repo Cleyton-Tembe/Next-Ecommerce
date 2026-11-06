@@ -1,4 +1,3 @@
-"use client";
 import { ProductT } from "@/Context/ProductContext";
 
 import { useCart } from "@/hooks/useCart";

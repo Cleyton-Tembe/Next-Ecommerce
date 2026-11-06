@@ -34,7 +34,7 @@ export async function SignUp(req: NextRequest) {
       password: password,
     });
 
-    const response = generateWebToken({
+    const response = await generateWebToken({
       name: user.name,
       id: user._id.toString(),
       role: user.role,
@@ -73,13 +73,10 @@ export async function Login(req: NextRequest) {
     const dbuser = await User.findOne({ email: email });
 
     if (!dbuser) {
-      return NextResponse.json(
-        { message: "you're not signed in" },
-        { status: 404 },
-      );
+      return NextResponse.json({ message: "user not found" }, { status: 404 });
     }
 
-    const isPwdCorrect = dbuser.ComparePassword(password);
+    const isPwdCorrect = await dbuser.ComparePassword(password);
 
     if (!isPwdCorrect)
       return NextResponse.json(
@@ -87,7 +84,7 @@ export async function Login(req: NextRequest) {
         { status: 400 },
       );
 
-    const response = generateWebToken({
+    const response = await generateWebToken({
       name: dbuser.name,
       id: dbuser._id.toString(),
       role: dbuser.role,
@@ -102,7 +99,10 @@ export async function Login(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("error Login: ", error);
-    NextResponse.json({ message: "something went wrong" }, { status: 500 });
+    return NextResponse.json(
+      { message: "something went wrong" },
+      { status: 500 },
+    );
   }
 }
 
@@ -111,7 +111,10 @@ export async function Logout() {
     const response = DeleteWeToken();
 
     if (!response)
-      NextResponse.json({ message: "failed to logout!" }, { status: 500 });
+      return NextResponse.json(
+        { message: "failed to logout!" },
+        { status: 500 },
+      );
 
     return response;
   } catch (error) {
@@ -145,9 +148,17 @@ export async function GetProfile(req: NextRequest) {
   try {
     const user = await GetAuthUserHeader(req);
 
-    NextResponse.json({ user }, { status: 200 });
+    if (!user) {
+      return NextResponse.json({ message: "user not found" }, { status: 401 });
+    }
+
+    const { password: _password, ...safeUser } = user.toObject();
+    return NextResponse.json({ user: safeUser }, { status: 200 });
   } catch (error) {
-    console.error("GetProfile: #%d", error);
-    NextResponse.json({ message: "Something Went Wrong" }, { status: 500 });
+    console.error("GetProfile: ", error);
+    return NextResponse.json(
+      { message: "Something Went Wrong" },
+      { status: 500 },
+    );
   }
 }

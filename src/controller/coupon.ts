@@ -5,34 +5,34 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GetCoupon = async (req: NextRequest) => {
   try {
-
-    await connectDB()
+    await connectDB();
     const user = await GetAuthUserHeader(req);
+    if (!user) {
+      return NextResponse.json({ message: "user not found" }, { status: 401 });
+    }
 
     const coupon = await Coupon.findOne({
       userId: user._id,
       isActive: true,
     });
 
-
-    return NextResponse.json({coupon: coupon || null}, {status: 200});
-
+    return NextResponse.json({ coupon: coupon || null }, { status: 200 });
   } catch (error) {
     console.log("Error in getCoupon controller", error);
-    return NextResponse.json({ message: "Server error"}, {status: 500});
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 };
 
-export const ValidateCoupon = async (req:NextRequest) => {
-
-
+export const ValidateCoupon = async (req: NextRequest) => {
   try {
-
-    await connectDB()
+    await connectDB();
     const body = await req.json();
-    const { code } = body
+    const { code } = body;
 
-    const user = await GetAuthUserHeader(req)
+    const user = await GetAuthUserHeader(req);
+    if (!user) {
+      return NextResponse.json({ message: "user not found" }, { status: 401 });
+    }
 
     const coupon = await Coupon.findOne({
       code: code,
@@ -41,13 +41,16 @@ export const ValidateCoupon = async (req:NextRequest) => {
     });
 
     if (!coupon) {
-      return NextResponse.json({ message: "Coupon not found" }, {status: 404});
+      return NextResponse.json(
+        { message: "Coupon not found" },
+        { status: 404 },
+      );
     }
 
     if (coupon.expirationDate < new Date()) {
       coupon.isActive = false;
       await coupon.save();
-      return NextResponse.json({ message: "Coupon expired" }, {status: 404});
+      return NextResponse.json({ message: "Coupon expired" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -55,9 +58,8 @@ export const ValidateCoupon = async (req:NextRequest) => {
       code: coupon.code,
       discountPercentage: coupon.discountPercentage,
     });
-
   } catch (error) {
     console.log("Error in validateCoupon controller", error);
-    return NextResponse.json({ message: "Server error" }, {status: 500});
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 };

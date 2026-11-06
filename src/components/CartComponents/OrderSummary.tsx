@@ -6,7 +6,9 @@ import { MoveRight } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY);
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
+);
 
 const OrderSummary = () => {
   const { total, subtotal, coupon, isCouponApplied, cart } = useCart();

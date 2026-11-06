@@ -1,7 +1,7 @@
-import { ProductContext } from "@/Context/ProductContext";
+import { useProducts } from "@/hooks/useProducts";
 import { motion } from "framer-motion";
 import { Loader, PlusCircle, Upload } from "lucide-react";
-import { useContext, useState } from "react";
+import { useState, type ChangeEvent } from "react";
 
 const categories = [
   "jeans",
@@ -22,22 +22,22 @@ const CreateProductionForm = () => {
     image: "",
   });
 
-  const { handleCreateProducts, loading } = useContext(ProductContext);
+  const { handleCreateProducts, loading } = useProducts();
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      reader.onloadend = () => {
-        setNewProduct({
-          ...newProduct,
-          image: reader.result ? reader.result.toString() : "",
-        });
-      };
+    const reader = new FileReader();
 
-      reader.readAsDataURL(file); // base64
-    }
+    reader.onloadend = () => {
+      setNewProduct((prev) => ({
+        ...prev,
+        image: typeof reader.result === "string" ? reader.result : "",
+      }));
+    };
+
+    reader.readAsDataURL(file); // base64
   };
 
   return (

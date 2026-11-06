@@ -6,18 +6,4 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// export async function POST(request: Request) {
-//   console.log("ddamm use server cabron");
-
-//   const body = await request.json();
-//   const { paramsToSign } = body;
-
-//   const signature = cloudinary.utils.api_sign_request(
-//     paramsToSign,
-//     String(process.env.CLOUDINARY_API_SECRET),
-//   );
-
-//   return Response.json({ signature });
-// }
-
 export default cloudinary;
