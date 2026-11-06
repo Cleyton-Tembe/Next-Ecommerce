@@ -2,7 +2,7 @@
 Loja online full-stack em Next.js com carrinho, cupões de desconto, pagamentos com Stripe e painel de administração com estatísticas de vendas.  > 
 ## Demo
 
-🔗 **[Ver demo](COLOCA_AQUI_O_LINK_DA_DEMO)**
+🔗 **[Ver demo](https://next-ecommerce-5hkyu1ppc-team-sw.vercel.app/)**
 
 ## Funcionalidades
 
